@@ -2,6 +2,8 @@ import epics as ep
 import time
 import numpy as np
 from math import isnan
+import csv
+
 
 ''' Custom exceptions'''
 class NoPower(Exception):
@@ -19,6 +21,14 @@ def GEN_check_RF():
 	PS=ep.caget('RA-RaBO01:RF-LLRFPreAmp:PinSw-Mon')
 	return PS
 
+def GEN_write_csv(list,file):
+	if (file.find('.csv')>0):
+		with open (file,mode='w') as csv_file:
+			writer=csv.writer(csv_file,delimiter=',',quotechar='"',quoting=csv.QUOTE_MINIMAL)
+			for i in range(0,list.shape[0]):
+				writer.writerow(list[i,:])
+	else:
+		raise ValueError('Invalid file extension')
 
 '''Tunning functions'''
 
@@ -66,7 +76,6 @@ def TUN_move_plunger(dir,pulses):
 	time.sleep(1.5)
 	while(TUN_wait_plunger(dir)):
 		time.sleep(1)
-	print('Finished moving')
 	return 0
 
 def TUN_find_offset():
@@ -107,16 +116,18 @@ def TUN_find_offset():
 
 '''Power functions'''
 
-def PWR_read_CalSys(var):
+def PWR_read_CalSys(var,inf_flag='inf'):
 
 	if(var.startswith('RFIn')):
 		RFIn=int(var[4])
+		if(RFIn<1 or RFIn>15):
+			raise ValueError('Channel '+str(RFIn)+' does not exist')
 	else:
-		raise ValueError('Channel '+str(RFIn)+' does not exist')
+		raise ValueError('Channel '+var+' does not exist')
 
 	PV_header='RA-RaBO01:RF-LLRFCalSys:PwrdBm'
-	pwr=ep.caget(PV_header+str(RFIn)+'_CALC')
-	if pwr<-42:
+	pwr=ep.caget(PV_header+str(RFIn-1)+'_CALC')
+	if (pwr<-42 and inf_flag!='noinf'):
 		return -np.inf
 	return pwr
 
@@ -124,12 +135,16 @@ def PWR_read_LLRF(var):
 
 	if(var.startswith('RFIn')):
 		RFIn=int(var[4])
+		if(RFIn<1 or RFIn>15):
+			raise ValueError('Channel '+str(RFIn)+' does not exist')
 	elif(var=='AmpRef'):
 		RFIn=16
+	elif(var=='AmpSP'):
+		RFIn=17
 	else:
-		raise ValueError('Channel '+str(RFIn)+' does not exist')
+		raise ValueError('Channel '+var+' does not exist')
 
-	BO_LLRF_label=['CAV:AMP','FWDCAV:AMP','REVCAV:AMP','MO:AMP','FWDSSA1:AMP','REVSSA1:AMP','CELL2:AMP','CELL4:AMP','CELL1:AMP','CELL5:AMP','INPRE:AMP','FWDPRE:AMP','REVPRE:AMP','FWDCIRC:AMP','REVCIRC:AMP','mV:AL:REF']
+	BO_LLRF_label=['CAV:AMP','FWDCAV:AMP','REVCAV:AMP','MO:AMP','FWDSSA1:AMP','REVSSA1:AMP','CELL2:AMP','CELL4:AMP','CELL1:AMP','CELL5:AMP','INPRE:AMP','FWDPRE:AMP','REVPRE:AMP','FWDCIRC:AMP','REVCIRC:AMP','SL:REF:AMP','mV:AL:REF','SL:INP:AMP']
 	PV_header='BR-RF-DLLRF-01:'
 
 	pwr=ep.caget(PV_header+BO_LLRF_label[RFIn-1])
@@ -137,7 +152,7 @@ def PWR_read_LLRF(var):
 
 def PWR_set_power_mv(lvl,incrate='1.0'):
 	PV_header='BR-RF-DLLRF-01:'
-	values=['0.01','0.03','0.1','0.25','0.5','1.0','2.0']
+	values=['0.01','0.03','0.1','0.25','0.5','1.0','2.0','Immediately']
 	if incrate in values:
 		ep.caput(PV_header+'AMPREF:INCRATE:S',incrate)
 	else:
@@ -152,9 +167,9 @@ def PWR_set_power_mv(lvl,incrate='1.0'):
 '''Phase functions'''
 
 def PHS_read(var):
-	if(var=='SLIn'):
+	if(var=='PhsIn'):
 		phs=ep.caget('BR-RF-DLLRF-01:SL:INP:PHS')
-	elif(var=='SetPoint'):
+	elif(var=='PhsSP'):
 		phs=ep.caget('BR-RF-DLLRF-01:PL:REF')
 	else:
 		raise ValueError('Invalid parameter: '+var)
