@@ -1,6 +1,7 @@
 import calibration_lib as cal
 import numpy as np
 import time
+from datetime import datetime
 
 step_size=5 #mV
 
@@ -16,7 +17,7 @@ pwr_vec=range(starting_power,stop_power,-step_size)
 while(cal.PWR_read_LLRF('AmpSP')-cal.PWR_read_LLRF('AmpRef')>0.5):
 	time.sleep(1)
 
-results=np.zeros((len(pwr_vec),33))
+results=np.zeros((len(pwr_vec),31))
 
 for pwr_lvl in pwr_vec:
 	if(not(cal.GEN_check_RF())):
@@ -47,9 +48,14 @@ for pwr_lvl in pwr_vec:
 		results[pwr_vec.find(pwr_lvl),2*(i-1)+1]=cal.PWR_read_LLRF('RFIn'+str(i))
 		results[pwr_vec.find(pwr_lvl),2*(i)]=cal.PWR_read_CalSys('RFIn'+str(i))
 
+now=datetime.now()
+date=now.strftime("%H%M_%d%m%y")
+
+setup=['LoopStatus='+str(cal.GEN_check_loop),'StepSize='+step_size,'StartmV='+starting_power]
 if(error):
 	results=results[0:pwr_vec.find(pwr_lvl)-1,:]
-	cal.GEN_write_csv(results,'out.csv')
+	cal.GEN_write_csv(results,date+'_FAILED.csv',setup)
 	raise Exception ('Check RF Power and Loop')
 
-cal.GEN_write_csv(results,'out.csv')
+#Corrigir filename
+cal.GEN_write_csv(results,date+'.csv'setup)

@@ -21,10 +21,15 @@ def GEN_check_RF():
 	PS=ep.caget('RA-RaBO01:RF-LLRFPreAmp:PinSw-Mon')
 	return PS
 
-def GEN_write_csv(list,file):
+def GEN_write_csv(list,file,setup=None):
 	if (file.find('.csv')>0):
 		with open (file,mode='w') as csv_file:
 			writer=csv.writer(csv_file,delimiter=',',quotechar='"',quoting=csv.QUOTE_MINIMAL)
+			header=['AmpRef','INRF1_LLRF','INRF1_CalSys','INRF2_LLRF','INRF2_CalSys','INRF3_LLRF','INRF3_CalSys','INRF4_LLRF','INRF4_CalSys','INRF5_LLRF','INRF5_CalSys','INRF6_LLRF','INRF6_CalSys','INRF7_LLRF','INRF7_CalSys','INRF8_LLRF','INRF8_CalSys','INRF9_LLRF','INRF9_CalSys','INRF10_LLRF','INRF10_CalSys','INRF11_LLRF','INRF11_CalSys','INRF12_LLRF',
+			'INRF12_CalSys','INRF13_LLRF','INRF13_CalSys','INRF14_LLRF','INRF14_CalSys','INRF15_LLRF','INRF15_CalSys']
+			if(setup):
+				writer.writerow(setup)
+			writer.writerow(header)
 			for i in range(0,list.shape[0]):
 				writer.writerow(list[i,:])
 	else:
