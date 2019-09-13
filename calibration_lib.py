@@ -10,6 +10,14 @@ class NoPower(Exception):
 class IterationLimitReached(Exception):
 	pass
 
+'''General functions'''
+def GEN_check_loop():
+	LS=ep.caget('BR-RF-DLLRF-01:SL')
+	return LS
+
+def GEN_check_RF():
+	PS=ep.caget('RA-RaBO01:RF-LLRFPreAmp:PinSw-Mon')
+	return PS
 
 
 '''Tunning functions'''
@@ -80,7 +88,6 @@ def TUN_find_offset():
 	while(diff<ref_threshold and iterations<=it_limit):
 		move_plunger(direction_sel,pulses)
 		diff_old=diff
-		fwd_power=ep.caget('RA-RaBO01:RF-LLRFCalSys:PwrdBm14-Mon')
 		fwd_power=PWR_read_calsys(14)
 		rev_power=PWR_read_calsys(15)
 		diff=fwd_power-rev_power
@@ -100,9 +107,11 @@ def TUN_find_offset():
 
 '''Power functions'''
 
-def PWR_read_calsys(RFIn):
+def PWR_read_CalSys(var):
 
-	if(RFIn>15 or RFIn<0):
+	if(var.startswith('RFIn')):
+		RFIn=int(var[4])
+	else:
 		raise ValueError('Channel '+str(RFIn)+' does not exist')
 
 	PV_header='RA-RaBO01:RF-LLRFCalSys:PwrdBm'
@@ -117,11 +126,44 @@ def PWR_read_LLRF(var):
 		RFIn=int(var[4])
 	elif(var=='AmpRef'):
 		RFIn=16
-	else
+	else:
 		raise ValueError('Channel '+str(RFIn)+' does not exist')
-		
-	BO_LLRF_label=['CAV','FWDCAV','REVCAV','MO','FWDSSA1','REVSSA1','CELL2','CELL4','CELL1','CELL5','INPRE','FWDPRE','REVPRE','FWDCIRC','REVCIRC','mV:AL:REF']
+
+	BO_LLRF_label=['CAV:AMP','FWDCAV:AMP','REVCAV:AMP','MO:AMP','FWDSSA1:AMP','REVSSA1:AMP','CELL2:AMP','CELL4:AMP','CELL1:AMP','CELL5:AMP','INPRE:AMP','FWDPRE:AMP','REVPRE:AMP','FWDCIRC:AMP','REVCIRC:AMP','mV:AL:REF']
 	PV_header='BR-RF-DLLRF-01:'
 
-	pwr=ep.caget(PV_header+BO_LLRF_label[RFIn-1]+':AMP')
+	pwr=ep.caget(PV_header+BO_LLRF_label[RFIn-1])
 	return pwr
+
+def PWR_set_power_mv(lvl,incrate='1.0'):
+	PV_header='BR-RF-DLLRF-01:'
+	values=['0.01','0.03','0.1','0.25','0.5','1.0','2.0']
+	if incrate in values:
+		ep.caput(PV_header+'AMPREF:INCRATE:S',incrate)
+	else:
+		raise ValueError('Invalid increase rate')
+	if lvl<=ep.caget(PV_header+'mV:AL:REF:S.DRVH'):
+		ep.caput(PV_header+'mV:AL:REF:S',lvl)
+	else:
+		raise ValueError('mV value above maximum')
+	return 0
+
+
+'''Phase functions'''
+
+def PHS_read(var):
+	if(var=='SLIn'):
+		phs=ep.caget('BR-RF-DLLRF-01:SL:INP:PHS')
+	elif(var=='SetPoint'):
+		phs=ep.caget('BR-RF-DLLRF-01:PL:REF')
+	else:
+		raise ValueError('Invalid parameter: '+var)
+
+def PHS_set_phase(lvl):
+
+	ep.caput('BR-RF-DLLRF-01:PHSREF:INCRATE:S','2.0')
+	if(lvl>=-180 and lvl<=180):
+		ep.caput('BR-RF-DLLRF-01:PL:REF:S',lvl)
+		return 0
+	else:
+		raise ValueError('Phase out of range')
