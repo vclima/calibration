@@ -68,6 +68,7 @@ def TUN_wait_plunger(dir):
 def TUN_move_plunger(dir,pulses):
 	speed='2 kHz'
 	PV_header='BR-RF-DLLRF-01:TUNE:PULSE:'
+	direction=['up','down']
 
 	ep.caput(PV_header+'FREQ:S',speed)
 	ep.caput(PV_header+'NUM:S',pulses)
@@ -93,17 +94,17 @@ def TUN_find_offset():
 
 	ep.caput(PV_header+'DTune-SP',0)
 	ep.caput(PV_header+'TUNE:S',0)
-	fwd_power=PWR_read_calsys(14)
-	rev_power=PWR_read_calsys(15)
+	fwd_power=PWR_read_CalSys('RFIn14')
+	rev_power=PWR_read_CalSys('RFIn15')
 	diff=fwd_power-rev_power
 	print('Ref ratio '+str(diff))
 	if(isnan(diff)):
 		raise NoPower('No RF power detected')
 	while(diff<ref_threshold and iterations<=it_limit):
-		move_plunger(direction_sel,pulses)
+		TUN_move_plunger(direction_sel,pulses)
 		diff_old=diff
-		fwd_power=PWR_read_calsys(14)
-		rev_power=PWR_read_calsys(15)
+		fwd_power=PWR_read_CalSys('RFIn14')
+		rev_power=PWR_read_CalSys('RFIn15')
 		diff=fwd_power-rev_power
 		print('Ref ratio '+str(diff))
 		if(isnan(diff)):
@@ -112,7 +113,7 @@ def TUN_find_offset():
 			direction_sel=not direction_sel
 		iterations+=1
 		pulses=1500+600*abs(ref_threshold-diff)
-	dephase=ep.caget(addr+'TUNE:DEPHS')
+	dephase=ep.caget(PV_header+'TUNE:DEPHS')
 	if(iterations>it_limit): #testar com RF
 		raise IterationLimitReached('Too many iterations')
 	print('Dephase: '+str(dephase)+'\n')
@@ -122,16 +123,16 @@ def TUN_find_offset():
 '''Power functions'''
 
 def PWR_read_CalSys(var,inf_flag='inf'):
-
+#add Offset correction option
 	if(var.startswith('RFIn')):
-		RFIn=int(var[4])
+		RFIn=int(var[4:])
 		if(RFIn<1 or RFIn>15):
 			raise ValueError('Channel '+str(RFIn)+' does not exist')
 	else:
 		raise ValueError('Channel '+var+' does not exist')
 
 	PV_header='RA-RaBO01:RF-LLRFCalSys:PwrdBm'
-	pwr=ep.caget(PV_header+str(RFIn-1)+'_CALC')
+	pwr=ep.caget(PV_header+str(RFIn)+'_CALC')
 	if (pwr<-42 and inf_flag!='noinf'):
 		return -np.inf
 	return pwr
@@ -139,7 +140,7 @@ def PWR_read_CalSys(var,inf_flag='inf'):
 def PWR_read_LLRF(var):
 
 	if(var.startswith('RFIn')):
-		RFIn=int(var[4])
+		RFIn=int(var[4:])
 		if(RFIn<1 or RFIn>15):
 			raise ValueError('Channel '+str(RFIn)+' does not exist')
 	elif(var=='AmpRef'):
