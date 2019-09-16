@@ -47,6 +47,7 @@ for pwr_lvl in pwr_vec:
 	for i in range(1,16):
 		results[pwr_vec.find(pwr_lvl),2*(i-1)+1]=cal.PWR_read_LLRF('RFIn'+str(i))
 		results[pwr_vec.find(pwr_lvl),2*(i)]=cal.PWR_read_CalSys('RFIn'+str(i))
+		#implementar media!!!
 
 now=datetime.now()
 date=now.strftime("%H%M_%d%m%y")
