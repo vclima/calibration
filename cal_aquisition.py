@@ -4,6 +4,7 @@ import time
 from datetime import datetime
 
 step_size=5 #mV
+meas_avg=5
 
 if(not(cal.GEN_check_RF())):
 	raise Exception ('Check RF Power and Loop')
@@ -45,9 +46,8 @@ for pwr_lvl in pwr_vec:
 		print('Unable to tune, power too low')
 	results[pwr_vec.find(pwr_lvl),0]=cal.PWR_read_LLRF('AmpRef')
 	for i in range(1,16):
-		results[pwr_vec.find(pwr_lvl),2*(i-1)+1]=cal.PWR_read_LLRF('RFIn'+str(i))
-		results[pwr_vec.find(pwr_lvl),2*(i)]=cal.PWR_read_CalSys('RFIn'+str(i))
-		#implementar media!!!
+		results[pwr_vec.find(pwr_lvl),2*(i-1)+1]=cal.PWR_read_LLRF('RFIn'+str(i),avg=5)
+		results[pwr_vec.find(pwr_lvl),2*(i)]=cal.PWR_read_CalSys('RFIn'+str(i),avg=5)
 
 now=datetime.now()
 date=now.strftime("%H%M_%d%m%y")

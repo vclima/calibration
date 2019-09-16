@@ -33,6 +33,13 @@ def GEN_write_csv(list,file,setup=None,header=None):
 				writer.writerow(list[i,:])
 	else:
 		raise ValueError('Invalid file extension')
+	return
+
+def GEN_PV_average(pvname=None,value=None,**kws):
+	global val
+	global measurements
+	val.append(value)
+	measurements+=1
 
 '''Tunning functions'''
 
@@ -121,7 +128,7 @@ def TUN_find_offset():
 
 '''Power functions'''
 
-def PWR_read_CalSys(var,inf_flag='inf',ofs_flag='noofs'):
+def PWR_read_CalSys(var,inf_flag='inf',ofs_flag='noofs',avg='noavg'):
 	if(var.startswith('RFIn')):
 		RFIn=int(var[4:])
 		if(RFIn<1 or RFIn>15):
@@ -130,15 +137,40 @@ def PWR_read_CalSys(var,inf_flag='inf',ofs_flag='noofs'):
 		raise ValueError('Channel '+var+' does not exist')
 
 	PV_header='RA-RaBO01:RF-LLRFCalSys:PwrdBm'
-	pwr=ep.caget(PV_header+str(RFIn)+'_CALC')
-	if (pwr<-42 and inf_flag!='noinf'):
-		return -np.inf
-	if(ofs_flag=='ofs'):
-		ofs=ep.caget('RA-RaBO01:RF-LLRFCalSys:OFSdB'+str(RFIn)+'-Mon')
-		return pwr+ofs
-	return pwr
+	pwr_pv=ep.PV(PV_header+str(RFIn)+'_CALC')
+	if(avg=='noavg'):
+		pwr=pwr_pv.get()
+		if (pwr<-42 and inf_flag!='noinf'):
+			return -np.inf
+		if(ofs_flag=='ofs'):
+			ofs=ep.caget('RA-RaBO01:RF-LLRFCalSys:OFSdB'+str(RFIn)+'-Mon')
+			return pwr+ofs
+		return pwr
+	else:
+		try:
+			avg_size=int(avg)
+		except ValueError:
+			raise ValueError('Avg parameter is not an integer')
+		global val
+		global measurements
+		val=[]
+		measurements=0
+		pwr_pv.add_callback(GEN_PV_average)
+		while measurements<avg_size:
+			pass
+		pwr_pv.clear_callbacks()
+		print(val)
+		avg=sum(val)/avg_size
+		if(avg<-42 and inf_flag!='noinf'):
+			return -np.inf
+		if(ofs_flag=='ofs'):
+			ofs=ep.caget('RA-RaBO01:RF-LLRFCalSys:OFSdB'+str(RFIn)+'-Mon')
+			return avg+ofs
+		return avg
 
-def PWR_read_LLRF(var):
+
+
+def PWR_read_LLRF(var,avg='noavg'):
 
 	if(var.startswith('RFIn')):
 		RFIn=int(var[4:])
@@ -154,8 +186,27 @@ def PWR_read_LLRF(var):
 	BO_LLRF_label=['CAV:AMP','FWDCAV:AMP','REVCAV:AMP','MO:AMP','FWDSSA1:AMP','REVSSA1:AMP','CELL2:AMP','CELL4:AMP','CELL1:AMP','CELL5:AMP','INPRE:AMP','FWDPRE:AMP','REVPRE:AMP','FWDCIRC:AMP','REVCIRC:AMP','SL:REF:AMP','mV:AL:REF','SL:INP:AMP']
 	PV_header='BR-RF-DLLRF-01:'
 
-	pwr=ep.caget(PV_header+BO_LLRF_label[RFIn-1])
-	return pwr
+	pwr_pv=ep.PV(PV_header+BO_LLRF_label[RFIn-1])
+	if(avg=='noavg'):
+		pwr=pwr_pv.get()
+		return pwr
+	else:
+		try:
+			avg_size=int(avg)
+		except ValueError:
+			raise ValueError('Avg parameter is not an integer')
+		global val
+		global measurements
+		val=[]
+		measurements=0
+		pwr_pv.add_callback(GEN_PV_average)
+		while measurements<avg_size:
+			pass
+		pwr_pv.clear_callbacks()
+		print(val)
+		avg=sum(val)/avg_size
+		return avg
+
 
 def PWR_set_power_mv(lvl,incrate='1.0'):
 	PV_header='BR-RF-DLLRF-01:'
