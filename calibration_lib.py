@@ -4,7 +4,7 @@ import numpy as np
 from math import isnan
 import csv
 
-
+direction_sel=1
 ''' Custom exceptions'''
 class NoPower(Exception):
 	pass
@@ -21,15 +21,14 @@ def GEN_check_RF():
 	PS=ep.caget('RA-RaBO01:RF-LLRFPreAmp:PinSw-Mon')
 	return PS
 
-def GEN_write_csv(list,file,setup=None):
+def GEN_write_csv(list,file,setup=None,header=None):
 	if (file.find('.csv')>0):
 		with open (file,mode='w') as csv_file:
 			writer=csv.writer(csv_file,delimiter=',',quotechar='"',quoting=csv.QUOTE_MINIMAL)
-			header=['AmpRef','INRF1_LLRF','INRF1_CalSys','INRF2_LLRF','INRF2_CalSys','INRF3_LLRF','INRF3_CalSys','INRF4_LLRF','INRF4_CalSys','INRF5_LLRF','INRF5_CalSys','INRF6_LLRF','INRF6_CalSys','INRF7_LLRF','INRF7_CalSys','INRF8_LLRF','INRF8_CalSys','INRF9_LLRF','INRF9_CalSys','INRF10_LLRF','INRF10_CalSys','INRF11_LLRF','INRF11_CalSys','INRF12_LLRF',
-			'INRF12_CalSys','INRF13_LLRF','INRF13_CalSys','INRF14_LLRF','INRF14_CalSys','INRF15_LLRF','INRF15_CalSys']
 			if(setup):
 				writer.writerow(setup)
-			writer.writerow(header)
+			if(header):
+				writer.writerow(header)
 			for i in range(0,list.shape[0]):
 				writer.writerow(list[i,:])
 	else:
@@ -89,13 +88,13 @@ def TUN_find_offset():
 	pulses=1500
 	PV_header='BR-RF-DLLRF-01:'
 	ref_threshold=27
-	direction_sel=1
+	global direction_sel
 	it_limit=11
 
 	ep.caput(PV_header+'DTune-SP',0)
 	ep.caput(PV_header+'TUNE:S',0)
-	fwd_power=PWR_read_CalSys('RFIn14')
-	rev_power=PWR_read_CalSys('RFIn15')
+	fwd_power=PWR_read_CalSys('RFIn14',ofs='ofs')
+	rev_power=PWR_read_CalSys('RFIn15',ofs='ofs')
 	diff=fwd_power-rev_power
 	print('Ref ratio '+str(diff))
 	if(isnan(diff)):
@@ -103,8 +102,8 @@ def TUN_find_offset():
 	while(diff<ref_threshold and iterations<=it_limit):
 		TUN_move_plunger(direction_sel,pulses)
 		diff_old=diff
-		fwd_power=PWR_read_CalSys('RFIn14')
-		rev_power=PWR_read_CalSys('RFIn15')
+		fwd_power=PWR_read_CalSys('RFIn14',ofs='ofs')
+		rev_power=PWR_read_CalSys('RFIn15',ofs='ofs')
 		diff=fwd_power-rev_power
 		print('Ref ratio '+str(diff))
 		if(isnan(diff)):
@@ -114,7 +113,7 @@ def TUN_find_offset():
 		iterations+=1
 		pulses=1500+600*abs(ref_threshold-diff)
 	dephase=ep.caget(PV_header+'TUNE:DEPHS')
-	if(iterations>it_limit): #testar com RF
+	if(iterations>it_limit):
 		raise IterationLimitReached('Too many iterations')
 	print('Dephase: '+str(dephase)+'\n')
 	return dephase
@@ -122,8 +121,7 @@ def TUN_find_offset():
 
 '''Power functions'''
 
-def PWR_read_CalSys(var,inf_flag='inf'):
-#add Offset correction option
+def PWR_read_CalSys(var,inf_flag='inf',ofs_flag='noofs'):
 	if(var.startswith('RFIn')):
 		RFIn=int(var[4:])
 		if(RFIn<1 or RFIn>15):
@@ -135,6 +133,9 @@ def PWR_read_CalSys(var,inf_flag='inf'):
 	pwr=ep.caget(PV_header+str(RFIn)+'_CALC')
 	if (pwr<-42 and inf_flag!='noinf'):
 		return -np.inf
+	if(ofs_flag=='ofs'):
+		ofs=ep.caget('RA-RaBO01:RF-LLRFCalSys:OFSdB'+str(RFIn)+'-Mon')
+		return pwr+ofs
 	return pwr
 
 def PWR_read_LLRF(var):
