@@ -41,6 +41,11 @@ def GEN_PV_average(pvname=None,value=None,**kws):
 	val.append(value)
 	measurements+=1
 
+def GEN_dBmtoVrms(dbm_value):
+	V_value=np.sqrt(10**(dbm_value/10)*0.05)
+	return V_value
+
+
 '''Tunning functions'''
 
 def TUN_set_direction(dir):
@@ -202,6 +207,44 @@ def PWR_read_LLRF(var,avg='noavg'):
 		pwr_pv.clear_callbacks()
 		avg=sum(val)/avg_size
 		return avg
+
+def PWR_read_LLRF_coeff(var,type):
+	BO_LLRF_label=['CAV','FWDCAV','REVCAV','MO','FWDSSA1','REVSSA1','CELL2','CELL4','CELL1','CELL5','INPRE','FWDPRE','REVPRE','FWDCIRC','REVCIRC']
+	coeff=np.zeros(5)
+	if(var.startswith('RFIn')):
+		RFIn=int(var[4:])
+		if(RFIn<1 or RFIn>15):
+			raise ValueError('Channel '+str(RFIn)+' does not exist')
+	else:
+		raise ValueError('Channel '+var+' does not exist')
+	PV_header='BR-RF-DLLRF-01:'
+	if(type=='Raw-U'):
+		PV_name=PV_header+BO_LLRF_label[RFIn-1]+':Const:Raw-U:'
+	elif(type=='U-Raw'):
+		PV_name=PV_header+BO_LLRF_label[RFIn-1]+':Const:U-Raw:'
+	elif(type=='OLG'):
+		PV_name=PV_header+'OLG:'+BO_LLRF_label[RFIn-1]+':Const:'
+	else:
+		raise ValueError('Type does not exist')
+	coeff[0]=ep.caget(PV_name+'C4')
+	coeff[1]=ep.caget(PV_name+'C3')
+	coeff[2]=ep.caget(PV_name+'C2')
+	coeff[3]=ep.caget(PV_name+'C1')
+	coeff[4]=ep.caget(PV_name+'C0')
+	return coeff
+
+def PWR_read_LLRF_ofs(var):
+	BO_LLRF_label=['CAV','FWDCAV','REVCAV','MO','FWDSSA1','REVSSA1','CELL2','CELL4','CELL1','CELL5','INPRE','FWDPRE','REVPRE','FWDCIRC','REVCIRC']
+	if(var.startswith('RFIn')):
+		RFIn=int(var[4:])
+		if(RFIn<1 or RFIn>15):
+			raise ValueError('Channel '+str(RFIn)+' does not exist')
+	else:
+		raise ValueError('Channel '+var+' does not exist')
+	PV_header='BR-RF-DLLRF-01:'
+	PV_name=PV_header+BO_LLRF_label[RFIn-1]+':Const:'
+	ofs=ep.caget(PV_name+'OFS')
+	return ofs
 
 def PWR_set_power_mv(lvl,incrate='1.0'):
 	PV_header='BR-RF-DLLRF-01:'
