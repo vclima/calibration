@@ -62,8 +62,8 @@ def TUN_set_direction(dir):
 
 def TUN_wait_plunger(dir):
 	direction=['up','down']
-	PLG1='BR-RF-DLLRF-01:TUNE:PLG1:MANUAL:'
-	PLG2='BR-RF-DLLRF-01:TUNE:PLG2:MANUAL:'
+	PLG1='BR-RF-DLLRF-01:PLG1:MANUAL:'
+	PLG2='BR-RF-DLLRF-01:PLG2:MANUAL:'
 
 	if(direction[dir]=='up'):
 		if(ep.caget(PLG1+'UP') or ep.caget(PLG2+'UP')):
@@ -78,11 +78,11 @@ def TUN_wait_plunger(dir):
 
 def TUN_move_plunger(dir,pulses):
 	speed='2 kHz'
-	PV_header='BR-RF-DLLRF-01:TUNE:PULSE:'
+	PV_header='BR-RF-DLLRF-01:TUNE:'
 	direction=['up','down']
 
-	ep.caput(PV_header+'FREQ:S',speed)
-	ep.caput(PV_header+'NUM:S',pulses)
+	ep.caput(PV_header+'PULSE:FREQ:S',speed)
+	ep.caput(PV_header+'PULSE:NUM:S',pulses)
 	print('Moving plunger '+direction[dir]+' '+str(pulses)+' pulses')
 
 	TUN_set_direction(dir)
@@ -105,8 +105,8 @@ def TUN_find_offset():
 
 	ep.caput(PV_header+'DTune-SP',0)
 	ep.caput(PV_header+'TUNE:S',0)
-	fwd_power=PWR_read_CalSys('RFIn14',ofs='ofs')
-	rev_power=PWR_read_CalSys('RFIn15',ofs='ofs')
+	fwd_power=PWR_read_CalSys('RFIn14',ofs_flag='ofs')
+	rev_power=PWR_read_CalSys('RFIn15',ofs_flag='ofs')
 	diff=fwd_power-rev_power
 	print('Ref ratio '+str(diff))
 	if(isnan(diff)):
@@ -114,8 +114,8 @@ def TUN_find_offset():
 	while(diff<ref_threshold and iterations<=it_limit):
 		TUN_move_plunger(direction_sel,pulses)
 		diff_old=diff
-		fwd_power=PWR_read_CalSys('RFIn14',ofs='ofs')
-		rev_power=PWR_read_CalSys('RFIn15',ofs='ofs')
+		fwd_power=PWR_read_CalSys('RFIn14',ofs_flag='ofs')
+		rev_power=PWR_read_CalSys('RFIn15',ofs_flag='ofs')
 		diff=fwd_power-rev_power
 		print('Ref ratio '+str(diff))
 		if(isnan(diff)):

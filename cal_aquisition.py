@@ -3,8 +3,8 @@ import numpy as np
 import time
 from datetime import datetime
 
-step_size=5 #mV
-meas_avg=5
+step_size=20 #mV
+meas_avg=10
 
 if(not(cal.GEN_check_RF())):
 	raise Exception ('Check RF Power and Loop')
@@ -13,7 +13,7 @@ starting_power=int(round(cal.PWR_read_LLRF('AmpSP')))
 stop_power=0
 error=0
 line_index=0
-pwr_vec=range(starting_power,stop_power,-step_size)
+pwr_vec=np.arange(starting_power,stop_power,-step_size)
 
 while(cal.PWR_read_LLRF('AmpSP')-cal.PWR_read_LLRF('AmpRef')>0.5):
 	time.sleep(1)
@@ -21,6 +21,7 @@ while(cal.PWR_read_LLRF('AmpSP')-cal.PWR_read_LLRF('AmpRef')>0.5):
 results=np.zeros((len(pwr_vec),31))
 
 for pwr_lvl in pwr_vec:
+	j=0
 	if(not(cal.GEN_check_RF())):
 		error=1
 		break
@@ -31,7 +32,7 @@ for pwr_lvl in pwr_vec:
 		time.sleep(1)
 
 	print('Waiting stabilization')
-	time.sleep(25)
+	time.sleep(5)
 	try:
 		of=cal.TUN_find_offset()
 	except NoPower:
@@ -44,10 +45,14 @@ for pwr_lvl in pwr_vec:
 			error=1
 			break
 		print('Unable to tune, power too low')
-	results[pwr_vec.find(pwr_lvl),0]=cal.PWR_read_LLRF('AmpRef')
+	results[j,0]=cal.PWR_read_LLRF('AmpRef')
 	for i in range(1,16):
-		results[pwr_vec.find(pwr_lvl),2*(i-1)+1]=cal.PWR_read_LLRF('RFIn'+str(i),avg=meas_avg])
-		results[pwr_vec.find(pwr_lvl),2*(i)]=cal.PWR_read_CalSys('RFIn'+str(i),avg=meas_avg)
+		print('Aquiring CalSys channel RFIn'+str(i))
+		results[j,2*(i-1)+1]=cal.PWR_read_LLRF('RFIn'+str(i),avg=meas_avg)
+		print('Aquiring LLRF channel RFIn'+str(i))
+		results[j,2*(i)]=cal.PWR_read_CalSys('RFIn'+str(i),avg=meas_avg)
+		i=i+1
+
 
 now=datetime.now()
 date=now.strftime("%H%M_%d%m%y")
