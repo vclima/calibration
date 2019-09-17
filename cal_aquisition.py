@@ -51,7 +51,7 @@ for pwr_lvl in pwr_vec:
 		results[j,2*(i-1)+1]=cal.PWR_read_LLRF('RFIn'+str(i),avg=meas_avg)
 		print('Aquiring LLRF channel RFIn'+str(i))
 		results[j,2*(i)]=cal.PWR_read_CalSys('RFIn'+str(i),avg=meas_avg)
-		i=i+1
+	j=j+1
 
 
 now=datetime.now()
