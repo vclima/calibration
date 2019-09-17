@@ -159,7 +159,6 @@ def PWR_read_CalSys(var,inf_flag='inf',ofs_flag='noofs',avg='noavg'):
 		while measurements<avg_size:
 			pass
 		pwr_pv.clear_callbacks()
-		print(val)
 		avg=sum(val)/avg_size
 		if(avg<-42 and inf_flag!='noinf'):
 			return -np.inf
@@ -167,8 +166,6 @@ def PWR_read_CalSys(var,inf_flag='inf',ofs_flag='noofs',avg='noavg'):
 			ofs=ep.caget('RA-RaBO01:RF-LLRFCalSys:OFSdB'+str(RFIn)+'-Mon')
 			return avg+ofs
 		return avg
-
-
 
 def PWR_read_LLRF(var,avg='noavg'):
 
@@ -203,10 +200,8 @@ def PWR_read_LLRF(var,avg='noavg'):
 		while measurements<avg_size:
 			pass
 		pwr_pv.clear_callbacks()
-		print(val)
 		avg=sum(val)/avg_size
 		return avg
-
 
 def PWR_set_power_mv(lvl,incrate='1.0'):
 	PV_header='BR-RF-DLLRF-01:'
