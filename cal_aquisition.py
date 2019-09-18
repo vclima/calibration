@@ -4,7 +4,8 @@ import time
 from datetime import datetime
 
 step_size=20 #mV
-meas_avg=10
+meas_avg='noavg'
+stab_time=25
 
 if(not(cal.GEN_check_RF())):
 	raise Exception ('Check RF Power and Loop')
@@ -32,7 +33,7 @@ for pwr_lvl in pwr_vec:
 		time.sleep(1)
 
 	print('Waiting stabilization')
-	time.sleep(5)
+	time.sleep(stab_time)
 	try:
 		of=cal.TUN_find_offset()
 	except NoPower:
