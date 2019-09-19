@@ -68,13 +68,13 @@ for pwr_lvl in pwr_vec:
 now=datetime.now()
 date=now.strftime("%H%M_%d%m%y")
 LoopStatus=cal.GEN_check_loop()
-setup=['LoopStatus='+str(cal.GEN_check_loop()),'StepSize='+str(step_size),'StartmV='+str(starting_power),'DataSize='+str(len(pwr_vec)),'LLRF measurements in mV CalSys in dBm']
+setup=['LoopStatus='+str(cal.GEN_check_loop()),'StepSize='+str(step_size),'StartmV='+str(starting_power),'DataSize='+str(len(pwr_vec)),'TimeStamp='+date,'LLRF measurements in mV CalSys in dBm']
 
 
 if(error):
 	results=results[0:pwr_vec.find(pwr_lvl)-1,:]
-	cal.GEN_write_csv(results,date+'_FAILED.csv',setup)
+	cal.GEN_write_csv(results,date+'_AQS_FAILED.csv',setup)
 	raise Exception ('Check RF Power and Loop')
 
 #Corrigir filename
-cal.GEN_write_csv(results,date+'.csv',setup,header)
+cal.GEN_write_csv(results,date+'_AQS.csv',setup,header)
