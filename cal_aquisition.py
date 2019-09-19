@@ -11,8 +11,8 @@ import time
 import epics as ep
 from datetime import datetime
 
-step_size=10 #mV
-meas_avg=5
+step_size=5 #mV
+meas_avg=10
 stab_time=20
 
 if(not(cal.GEN_check_RF())):
@@ -58,9 +58,9 @@ for pwr_lvl in pwr_vec:
 			print('Unable to tune, power too low')
 	results[j,0]=cal.PWR_read_LLRF('AmpRef')
 	for i in range(1,16):
-		print('Aquiring CalSys channel RFIn'+str(i))
-		results[j,2*(i-1)+1]=cal.PWR_read_LLRF('RFIn'+str(i),avg=meas_avg)
 		print('Aquiring LLRF channel RFIn'+str(i))
+		results[j,2*(i-1)+1]=cal.PWR_read_LLRF('RFIn'+str(i),avg=meas_avg)
+		print('Aquiring CalSys channel RFIn'+str(i))
 		results[j,2*(i)]=cal.PWR_read_CalSys('RFIn'+str(i),avg=meas_avg)
 	j=j+1
 

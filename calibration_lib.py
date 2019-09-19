@@ -160,11 +160,13 @@ def PWR_read_CalSys(var,inf_flag='inf',ofs_flag='noofs',avg='noavg'):
 		global measurements
 		val=[]
 		measurements=0
+		timeout=15
 		pwr_pv.add_callback(GEN_PV_average)
-		while measurements<avg_size:
+		start_time=time.perf_counter()
+		while measurements<avg_size and time.perf_counter()-start_time<timeout:
 			pass
 		pwr_pv.clear_callbacks()
-		avg=sum(val)/avg_size
+		avg=sum(val)/len(val)
 		if(avg<-42 and inf_flag!='noinf'):
 			return -np.inf
 		if(ofs_flag=='ofs'):
@@ -201,11 +203,14 @@ def PWR_read_LLRF(var,avg='noavg'):
 		global measurements
 		val=[]
 		measurements=0
+		timeout=15
 		pwr_pv.add_callback(GEN_PV_average)
-		while measurements<avg_size:
+		start_time=time.perf_counter()
+		while measurements<avg_size and time.perf_counter()-start_time<timeout:
 			pass
 		pwr_pv.clear_callbacks()
-		avg=sum(val)/avg_size
+		print(val)
+		avg=sum(val)/len(val)
 		return avg
 
 def PWR_read_LLRF_coeff(var,type):
