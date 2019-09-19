@@ -99,7 +99,7 @@ def TUN_find_offset():
 	iterations=0
 	pulses=1500
 	PV_header='BR-RF-DLLRF-01:'
-	ref_threshold=20
+	ref_threshold=27
 	global direction_sel
 	it_limit=11
 
@@ -123,7 +123,7 @@ def TUN_find_offset():
 		if(diff<diff_old):
 			direction_sel=not direction_sel
 		iterations+=1
-		pulses=1500+1000*abs(ref_threshold-diff)
+		pulses=int(1500+1000*abs(ref_threshold-diff))
 	dephase=ep.caget(PV_header+'TUNE:DEPHS')
 	if(iterations>it_limit):
 		raise IterationLimitReached('Too many iterations')
