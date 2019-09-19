@@ -1,3 +1,10 @@
+class NoPower(Exception):
+	pass
+
+class IterationLimitReached(Exception):
+	pass
+
+
 import calibration_lib as cal
 import numpy as np
 import time
@@ -5,7 +12,7 @@ from datetime import datetime
 
 step_size=20 #mV
 meas_avg='noavg'
-stab_time=25
+stab_time=20
 
 if(not(cal.GEN_check_RF())):
 	raise Exception ('Check RF Power and Loop')
@@ -16,8 +23,9 @@ error=0
 line_index=0
 pwr_vec=np.arange(starting_power,stop_power,-step_size)
 
-while(cal.PWR_read_LLRF('AmpSP')-cal.PWR_read_LLRF('AmpRef')>0.5):
-	time.sleep(1)
+while(abs(cal.PWR_read_LLRF('AmpSP')-cal.PWR_read_LLRF('AmpRef'))>0.05):
+	print(abs(cal.PWR_read_LLRF('AmpSP')-cal.PWR_read_LLRF('AmpRef')))
+	time.sleep(3)
 
 results=np.zeros((len(pwr_vec),31))
 
@@ -26,26 +34,28 @@ for pwr_lvl in pwr_vec:
 	if(not(cal.GEN_check_RF())):
 		error=1
 		break
-	cal.PWR_set_power_mv(pwr_lvl)
+	cal.PWR_set_power_mv(pwr_lvl,incrate='0.25')
 	print('Setting power to '+str(pwr_lvl)+' mV')
-
-	while(cal.PWR_read_LLRF('AmpSP')-cal.PWR_read_LLRF('AmpRef')>0.5):
-		time.sleep(1)
+	time.sleep(1)
+	while(abs(cal.PWR_read_LLRF('AmpSP')-cal.PWR_read_LLRF('AmpRef'))>0.05):
+		print(abs(cal.PWR_read_LLRF('AmpSP')-cal.PWR_read_LLRF('AmpRef')))
+		time.sleep(3)
 
 	print('Waiting stabilization')
 	time.sleep(stab_time)
-	try:
-		of=cal.TUN_find_offset()
-	except NoPower:
-		if(not(cal.GEN_check_RF())):
-			error=1
-			break
-		print('Unable to tune, power too low')
-	except IterationLimitReached:
-		if(not(cal.GEN_check_RF())):
-			error=1
-			break
-		print('Unable to tune, power too low')
+	if(pwr_lvl>30):
+		try:
+			of=cal.TUN_find_offset()
+		except NoPower:
+			if(not(cal.GEN_check_RF())):
+				error=1
+				break
+			print('Unable to tune, power too low')
+		except IterationLimitReached:
+			if(not(cal.GEN_check_RF())):
+				error=1
+				break
+			print('Unable to tune, power too low')
 	results[j,0]=cal.PWR_read_LLRF('AmpRef')
 	for i in range(1,16):
 		print('Aquiring CalSys channel RFIn'+str(i))
