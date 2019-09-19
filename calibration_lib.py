@@ -209,7 +209,6 @@ def PWR_read_LLRF(var,avg='noavg'):
 		while measurements<avg_size and time.perf_counter()-start_time<timeout:
 			pass
 		pwr_pv.clear_callbacks()
-		print(val)
 		avg=sum(val)/len(val)
 		return avg
 
