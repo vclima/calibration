@@ -159,8 +159,9 @@ def PWR_read_CalSys(var,inf_flag='inf',ofs_flag='noofs',avg='noavg'):
 		global val
 		global measurements
 		val=[]
-		measurements=0
-		timeout=15
+		val.append(pwr_pv.get())
+		measurements=1
+		timeout=1.5*avg_size
 		pwr_pv.add_callback(GEN_PV_average)
 		start_time=time.perf_counter()
 		while measurements<avg_size and time.perf_counter()-start_time<timeout:
@@ -184,10 +185,12 @@ def PWR_read_LLRF(var,avg='noavg'):
 		RFIn=16
 	elif(var=='AmpSP'):
 		RFIn=17
+	elif(var=='tst'):
+		RFIn=19
 	else:
 		raise ValueError('Channel '+var+' does not exist')
 
-	BO_LLRF_label=['CAV:AMP','FWDCAV:AMP','REVCAV:AMP','MO:AMP','FWDSSA1:AMP','REVSSA1:AMP','CELL2:AMP','CELL4:AMP','CELL1:AMP','CELL5:AMP','INPRE:AMP','FWDPRE:AMP','REVPRE:AMP','FWDCIRC:AMP','REVCIRC:AMP','SL:REF:AMP','mV:AL:REF','SL:INP:AMP']
+	BO_LLRF_label=['CAV:AMP','FWDCAV:AMP','REVCAV:AMP','MO:AMP','FWDSSA1:AMP','REVSSA1:AMP','CELL2:AMP','CELL4:AMP','CELL1:AMP','CELL5:AMP','INPRE:AMP','FWDPRE:AMP','REVPRE:AMP','FWDCIRC:AMP','REVCIRC:AMP','SL:REF:AMP','mV:AL:REF','SL:INP:AMP','mV:AMPREF:MIN']
 	PV_header='BR-RF-DLLRF-01:'
 
 	pwr_pv=ep.PV(PV_header+BO_LLRF_label[RFIn-1])
@@ -202,8 +205,9 @@ def PWR_read_LLRF(var,avg='noavg'):
 		global val
 		global measurements
 		val=[]
-		measurements=0
-		timeout=15
+		val.append(pwr_pv.get())
+		measurements=1
+		timeout=1.5*avg_size
 		pwr_pv.add_callback(GEN_PV_average)
 		start_time=time.perf_counter()
 		while measurements<avg_size and time.perf_counter()-start_time<timeout:

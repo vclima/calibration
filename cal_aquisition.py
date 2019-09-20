@@ -64,7 +64,7 @@ for pwr_lvl in pwr_vec:
 		results[j,2*(i)]=cal.PWR_read_CalSys('RFIn'+str(i),avg=meas_avg)
 	j=j+1
 
-
+ep.caput(PV_header+'TUNE:S',0)
 now=datetime.now()
 date=now.strftime("%H%M_%d%m%y")
 LoopStatus=cal.GEN_check_loop()
