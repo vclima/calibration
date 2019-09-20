@@ -3,6 +3,7 @@ import time
 import numpy as np
 from math import isnan
 import csv
+import logging
 
 direction_sel=1
 ''' Custom exceptions'''
@@ -83,34 +84,39 @@ def TUN_move_plunger(dir,pulses):
 
 	ep.caput(PV_header+'PULSE:FREQ:S',speed)
 	ep.caput(PV_header+'PULSE:NUM:S',pulses)
-	print('Moving plunger '+direction[dir]+' '+str(pulses)+' pulses')
+	logging.debug('Moving plunger '+direction[dir]+' '+str(pulses)+' pulses')
 
 	TUN_set_direction(dir)
 	ep.caput(PV_header+'RESET:S',1)
 	time.sleep(0.5)
 	ep.caput(PV_header+'RESET:S',0)
-	print('Waiting plunger')
+	logging.debug('Waiting plunger')
 	time.sleep(1.5)
 	while(TUN_wait_plunger(dir)):
 		time.sleep(1)
 	return 0
 
-def TUN_find_offset():
+def TUN_find_offset(ref_threshold=27):
 	iterations=0
 	pulses=1500
 	PV_header='BR-RF-DLLRF-01:'
-	ref_threshold=27
 	global direction_sel
 	it_limit=11
 
-	ep.caput(PV_header+'DTune-SP',0)
-	ep.caput(PV_header+'TUNE:S',0)
 	fwd_power=PWR_read_CalSys('RFIn14',ofs_flag='ofs')
 	rev_power=PWR_read_CalSys('RFIn15',ofs_flag='ofs')
 	diff=fwd_power-rev_power
 	print('Ref ratio '+str(diff))
 	if(isnan(diff)):
 		raise NoPower('No RF power detected')
+	print('Tunning...')
+	if(diff>ref_threshold):
+		offset=ep.caget(PV_header+'DTune-SP')
+		dephase=ep.caget(PV_header+'TUNE:DEPHS')
+		return dephase+offset
+
+	ep.caput(PV_header+'DTune-SP',0)
+	ep.caput(PV_header+'TUNE:S',0)
 	while(diff<ref_threshold and iterations<=it_limit):
 		TUN_move_plunger(direction_sel,pulses)
 		diff_old=diff
@@ -128,6 +134,7 @@ def TUN_find_offset():
 	if(iterations>it_limit):
 		raise IterationLimitReached('Too many iterations')
 	print('Dephase: '+str(dephase)+'\n')
+	logging.debug('Dephase: '+str(dephase))
 	return dephase
 
 
@@ -167,6 +174,8 @@ def PWR_read_CalSys(var,inf_flag='inf',ofs_flag='noofs',avg='noavg'):
 		while measurements<avg_size and time.perf_counter()-start_time<timeout:
 			pass
 		pwr_pv.clear_callbacks()
+		if(measurements<avg_size):
+			logging.warning('PWR read timeout:'+str(measurements)+' measurements taken')
 		avg=sum(val)/len(val)
 		if(avg<-42 and inf_flag!='noinf'):
 			return -np.inf
@@ -213,6 +222,8 @@ def PWR_read_LLRF(var,avg='noavg'):
 		while measurements<avg_size and time.perf_counter()-start_time<timeout:
 			pass
 		pwr_pv.clear_callbacks()
+		if(measurements<avg_size):
+			logging.warning('PWR read timeout:'+str(measurements)+' measurements taken')
 		avg=sum(val)/len(val)
 		return avg
 
