@@ -55,7 +55,7 @@ try:
 		logging.info('Setting power to '+str(pwr_lvl)+' mV')
 		time.sleep(1)
 		while(abs(cal.PWR_read_LLRF('AmpSP')-cal.PWR_read_LLRF('AmpRef'))>0.1):
-			logging.debug(abs(cal.PWR_read_LLRF('AmpSP')-cal.PWR_read_LLRF('AmpRef')))
+			logging.debug('PWR diff: '+str(abs(cal.PWR_read_LLRF('AmpSP')-cal.PWR_read_LLRF('AmpRef'))))
 			time.sleep(1)
 
 		logging.debug('Reached power level')
