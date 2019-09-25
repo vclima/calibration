@@ -22,15 +22,16 @@ meas_avg=10
 stab_time=20
 
 if(not(cal.GEN_check_RF())):
-	raise Exception ('Check RF Power and Loop')
 	logging.error('No RF Power')
+	raise Exception ('Check RF Power and Loop')
+
 
 starting_power=int(round(cal.PWR_read_LLRF('AmpSP')))
 stop_power=20
 error=0
 line_index=0
 pwr_vec=np.arange(starting_power,stop_power-step_size,-step_size)
-logging.debug('PWR levels: 'str(pwr_vec))
+logging.debug('PWR levels: '+str(pwr_vec))
 
 while(abs(cal.PWR_read_LLRF('AmpSP')-cal.PWR_read_LLRF('AmpRef'))>0.1):
 	print(abs(cal.PWR_read_LLRF('AmpSP')-cal.PWR_read_LLRF('AmpRef')))
