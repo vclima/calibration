@@ -27,7 +27,7 @@ if(not(cal.GEN_check_RF())):
 
 
 starting_power=int(round(cal.PWR_read_LLRF('AmpSP')))
-stop_power=20
+stop_power=40
 error=0
 line_index=0
 pwr_vec=np.arange(starting_power,stop_power-step_size,-step_size)
@@ -40,12 +40,13 @@ while(abs(cal.PWR_read_LLRF('AmpSP')-cal.PWR_read_LLRF('AmpRef'))>0.1):
 results=np.zeros((len(pwr_vec),31))
 
 j=0
+PV_header='BR-RF-DLLRF-01:'
 
 of=cal.TUN_find_offset(27)
 ep.caput(PV_header+'DTune-SP',float(of))
 ep.caput(PV_header+'TUNE:S',1)
 
-PV_header='BR-RF-DLLRF-01:'
+
 try:
 	for pwr_lvl in pwr_vec:
 		if(not(cal.GEN_check_RF())):
@@ -80,8 +81,9 @@ try:
 			logging.info('Aquiring LLRF channel RFIn'+str(i))
 			results[j,2*(i-1)+1]=cal.PWR_read_LLRF('RFIn'+str(i),avg=meas_avg)
 			print('Aquiring CalSys channel RFIn'+str(i))
-			results[j,2*(i)]=cal.PWR_read_CalSys('RFIn'+str(i),avg=meas_avg)
 			logging.info('Aquiring CalSys channel RFIn'+str(i))
+			results[j,2*(i)]=cal.PWR_read_CalSys('RFIn'+str(i),avg=meas_avg)
+
 		j=j+1
 except:
 	logging.exception('Unknown exception')

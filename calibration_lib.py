@@ -175,7 +175,7 @@ def PWR_read_CalSys(var,inf_flag='inf',ofs_flag='noofs',avg='noavg'):
 			pass
 		pwr_pv.clear_callbacks()
 		if(measurements<avg_size):
-			logging.warning('PWR read timeout:'+str(measurements)+' measurements taken')
+			logging.warning(var+' PWR read timeout:'+str(measurements)+' measurements taken')
 		avg=sum(val)/len(val)
 		if(avg<-42 and inf_flag!='noinf'):
 			return -np.inf
@@ -223,7 +223,7 @@ def PWR_read_LLRF(var,avg='noavg'):
 			pass
 		pwr_pv.clear_callbacks()
 		if(measurements<avg_size):
-			logging.warning('PWR read timeout:'+str(measurements)+' measurements taken')
+			logging.warning(var+' PWR read timeout:'+str(measurements)+' measurements taken')
 		avg=sum(val)/len(val)
 		return avg
 
