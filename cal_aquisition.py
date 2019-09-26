@@ -99,7 +99,7 @@ header=['AmpRef_LLRF','INRF1_LLRF','INRF1_CalSys','INRF2_LLRF','INRF2_CalSys','I
 
 if(error):
 	results=results[0:j,:]
-	cal.GEN_write_csv(results,date+'_AQS_FAILED.csv',setup)
+	cal.GEN_write_csv(results,date+'_AQS_FAILED.csv',setup,header)
 	if(error==1):
 		logging.error('No RF Power')
 		raise Exception ('Check RF Power and Loop')
