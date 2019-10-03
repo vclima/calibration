@@ -3,11 +3,12 @@ import numpy as np
 import calibration_lib as cal
 import matplotlib.pyplot as plt
 
-csv_name='1547_250919_AQS_test.csv'
+csv_name='1547_250919_AQS-OLG.csv'
 
 header_template=header=['AmpRef_LLRF','INRF1_LLRF','INRF1_CalSys','INRF2_LLRF','INRF2_CalSys','INRF3_LLRF','INRF3_CalSys','INRF4_LLRF','INRF4_CalSys','INRF5_LLRF',
 'INRF5_CalSys','INRF6_LLRF','INRF6_CalSys','INRF7_LLRF','INRF7_CalSys','INRF8_LLRF','INRF8_CalSys','INRF9_LLRF','INRF9_CalSys','INRF10_LLRF',
 'INRF10_CalSys','INRF11_LLRF','INRF11_CalSys','INRF12_LLRF','INRF12_CalSys','INRF13_LLRF','INRF13_CalSys','INRF14_LLRF','INRF14_CalSys','INRF15_LLRF','INRF15_CalSys']
+BO_LLRF_label=['CAV:AMP','FWDCAV:AMP','REVCAV:AMP','MO:AMP','FWDSSA1:AMP','REVSSA1:AMP','CELL2:AMP','CELL4:AMP','CELL1:AMP','CELL5:AMP','INPRE:AMP','FWDPRE:AMP','REVPRE:AMP','FWDCIRC:AMP','REVCIRC:AMP','SL:REF:AMP','mV:AL:REF','SL:INP:AMP','mV:AMPREF:MIN']
 
 with open(csv_name) as csvfile:
 	csvfile = csv.reader(csvfile, delimiter=',', quotechar='"')
@@ -47,7 +48,7 @@ else:
 	for k in olg_cols:
 		found=0
 		for i in range(1,range_length):
-			if(header[2*(i-1)+1]==header_template[2*(k-1)+1]):
+			if(header[2*(i-1)+1]==header_template[2*k+1]):
 				d2=data[:,2*(i-1)+1]
 				olg_new,r,_,_,_=np.polyfit(d1,d2,4,full=True)
 				olg_old=cal.PWR_read_LLRF_coeff('RFIn'+str(k+1),'OLG')
@@ -56,10 +57,10 @@ else:
 				plt.plot(d1,d2_fit,label='New')
 				plt.plot(d1,d2_old_fit,label='Old')
 				plt.plot(d1,d2,'bo')
-				plt.title('RFIn'+str(i+1)+' OLG R='+str(r))
+				plt.title(BO_LLRF_label[k]+' OLG R='+str(r))
 				plt.legend(loc='best')
 				plt.show(block=False)
-				ans=input('Do you wish to replace the '+header_template[2*(k-1)+1]+' OLG old coefficients? [Y/n]?')
+				ans=input('Do you wish to replace the '+BO_LLRF_label[k]+' OLG old coefficients? [Y/n]?')
 				if(ans=='Y' or ans=='y'):
 					olg_coeff[:,j]=olg_new
 					print('Coefficients replaced')
@@ -72,6 +73,7 @@ else:
 				found=1
 				break
 		if(not found):
+			print(BO_LLRF_label[k]+' OLG not found, keeping old coefficients')
 			olg_old=cal.PWR_read_LLRF_coeff('RFIn'+str(k+1),'OLG')
 			olg_coeff[:,j]=olg_old
 			j=j+1
@@ -89,10 +91,10 @@ for k in range(1,16):
 			plt.plot(d1,d2_fit,label='New')
 			plt.plot(d1,d2_old_fit,label='Old')
 			plt.plot(d1,d2,'bo')
-			plt.title('RFIn'+str(i)+' Raw-U R='+str(r))
+			plt.title(BO_LLRF_label[k-1]+' Raw-U R='+str(r))
 			plt.legend(loc='best')
 			plt.show(block=False)
-			ans=input('Do you wish to replace the '+header_template[2*(k-1)+1]+' RAW-U old coefficients? [Y/n]?')
+			ans=input('Do you wish to replace the '+BO_LLRF_label[k-1]+' RAW-U old coefficients? [Y/n]?')
 			if(ans=='Y' or ans=='y'):
 				coeff_Raw_U[:,k-1]=c_new
 				print('Coefficients replaced')
@@ -122,10 +124,10 @@ for k in u_raw_inputs:
 			plt.plot(d1,d2_fit,label='New')
 			plt.plot(d1,d2_old_fit,label='Old')
 			plt.plot(d1,d2,'bo')
-			plt.title('RFIn'+str(k)+' U-Raw R='+str(r))
+			plt.title(BO_LLRF_label[k-1]+' U-Raw R='+str(r))
 			plt.legend(loc='best')
 			plt.show(block=False)
-			ans=input('Do you wish to replace the '+header_template[2*(k-1)+1]+' U-Raw old coefficients? [Y/n]?')
+			ans=input('Do you wish to replace the '+BO_LLRF_label[k-1]+' U-Raw old coefficients? [Y/n]?')
 			if(ans=='Y' or ans=='y'):
 				coeff_U_Raw[:,j]=c_new
 				print('Coefficients replaced')
@@ -141,5 +143,7 @@ for k in u_raw_inputs:
 		c_old=cal.PWR_read_LLRF_coeff('RFIn'+str(k),'U-Raw')
 		coeff_U_Raw[:,j]=c_old
 		j=j+1
-out=np.concatenate(olg_coeff,coeff_Raw_U,coeff_U_Raw)
 
+out_header=['OLG_CAV:AMP','OLG_FWDCAV:AMP','OLG_FWDSSA1:AMP','RAW_U_CAV:AMP','RAW_U_FWDCAV:AMP','RAW_U_REVCAV:AMP','RAW_U_MO:AMP','RAW_U_FWDSSA1:AMP','RAW_U_REVSSA1:AMP','RAW_U_CELL2:AMP','RAW_U_CELL4:AMP','RAW_U_CELL1:AMP','RAW_U_CELL5:AMP','RAW_U_INPRE:AMP','RAW_U_FWDPRE:AMP','RAW_U_REVPRE:AMP','RAW_U_FWDCIRC:AMP','RAW_U_REVCIRC:AMP','U_RAW_CAV:AMP','U_RAW_FWDCAV:AMP','U_RAW_FWDSSA1:AMP']
+out=np.concatenate((olg_coeff,coeff_Raw_U,coeff_U_Raw),axis=1)
+cal.GEN_write_csv(out,TimeStamp+'_fit.csv',header=out_header)

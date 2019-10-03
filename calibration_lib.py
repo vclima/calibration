@@ -252,6 +252,40 @@ def PWR_read_LLRF_coeff(var,type):
 	coeff[4]=ep.caget(PV_name+'C0')
 	return coeff
 
+def PWR_set_LLRF_coeff(coef):
+	if(not coef.shape==(5,21)):
+		raise ValueError ('Wrong coefficient array size')
+	PV_header='BR-RF-DLLRF-01:'
+	BO_LLRF_label=['CAV','FWDCAV','FWDSSA1','CAV','FWDCAV','REVCAV','MO','FWDSSA1','REVSSA1','CELL2','CELL4','CELL1','CELL5','INPRE','FWDPRE','REVPRE','FWDCIRC','REVCIRC','CAV','FWDCAV','FWDSSA1']
+	for i in range(0,21):
+		if i<3:
+			logging.info('Setting '+BO_LLRF_label[i]+' OLG Coefficients')
+			print('Setting '+BO_LLRF_label[i]+' OLG Coefficients')
+			PV_name=PV_header+'OLG:'+BO_LLRF_label[i]+':Const:'
+			ep.caput(PV_name+'C4:S',coef[0,i])
+			ep.caput(PV_name+'C3:S',coef[1,i])
+			ep.caput(PV_name+'C2:S',coef[2,i])
+			ep.caput(PV_name+'C1:S',coef[3,i])
+			ep.caput(PV_name+'C0:S',coef[4,i])
+		elif i<18:
+			logging.info('Setting '+BO_LLRF_label[i]+' RAW-U Coefficients')
+			print('Setting '+BO_LLRF_label[i]+' RAW-U Coefficients')
+			PV_name=PV_header+BO_LLRF_label[i]+':Const:Raw-U:'
+			ep.caput(PV_name+'C4:S',coef[0,i])
+			ep.caput(PV_name+'C3:S',coef[1,i])
+			ep.caput(PV_name+'C2:S',coef[2,i])
+			ep.caput(PV_name+'C1:S',coef[3,i])
+			ep.caput(PV_name+'C0:S',coef[4,i])
+		else:
+			logging.info('Setting '+BO_LLRF_label[i]+' U-RAW Coefficients')
+			print('Setting '+BO_LLRF_label[i]+' U-RAW Coefficients')
+			PV_name=PV_header+BO_LLRF_label[i]+':Const:U-Raw:'
+			ep.caput(PV_name+'C4:S',coef[0,i])
+			ep.caput(PV_name+'C3:S',coef[1,i])
+			ep.caput(PV_name+'C2:S',coef[2,i])
+			ep.caput(PV_name+'C1:S',coef[3,i])
+			ep.caput(PV_name+'C0:S',coef[4,i])
+
 def PWR_read_LLRF_ofs(var):
 	BO_LLRF_label=['CAV','FWDCAV','REVCAV','MO','FWDSSA1','REVSSA1','CELL2','CELL4','CELL1','CELL5','INPRE','FWDPRE','REVPRE','FWDCIRC','REVCIRC']
 	if(var.startswith('RFIn')):
