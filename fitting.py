@@ -3,7 +3,7 @@ import numpy as np
 import calibration_lib as cal
 import matplotlib.pyplot as plt
 
-csv_name='1547_250919_AQS-OLG.csv'
+csv_name='1547_250919_AQS.csv'
 
 header_template=header=['AmpRef_LLRF','INRF1_LLRF','INRF1_CalSys','INRF2_LLRF','INRF2_CalSys','INRF3_LLRF','INRF3_CalSys','INRF4_LLRF','INRF4_CalSys','INRF5_LLRF',
 'INRF5_CalSys','INRF6_LLRF','INRF6_CalSys','INRF7_LLRF','INRF7_CalSys','INRF8_LLRF','INRF8_CalSys','INRF9_LLRF','INRF9_CalSys','INRF10_LLRF',

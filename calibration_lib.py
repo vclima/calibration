@@ -4,6 +4,7 @@ import numpy as np
 from math import isnan
 import csv
 import logging
+import threading
 
 direction_sel=1
 ''' Custom exceptions'''
@@ -12,6 +13,10 @@ class NoPower(Exception):
 
 class IterationLimitReached(Exception):
 	pass
+
+g_lock = threading.RLock()
+measurements = 0
+val = 0
 
 '''General functions'''
 def GEN_check_loop():
@@ -37,15 +42,34 @@ def GEN_write_csv(list,file,setup=None,header=None):
 	return
 
 def GEN_PV_average(pvname=None,value=None,**kws):
-	global val
-	global measurements
-	val.append(value)
-	measurements+=1
+	with g_lock:
+		global val
+		global measurements
+		val.append(value)
+		print(pvname, value, measurements)
+		measurements += 1
 
 def GEN_dBmtoVrms(dbm_value):
 	V_value=np.sqrt(10**(dbm_value/10)*0.05)
 	return V_value
 
+def GEN_create_LLRF_PVset():
+	BO_LLRF_label=['CAV:AMP','FWDCAV:AMP','REVCAV:AMP','MO:AMP','FWDSSA1:AMP','REVSSA1:AMP','CELL2:AMP','CELL4:AMP','CELL1:AMP','CELL5:AMP','INPRE:AMP','FWDPRE:AMP','REVPRE:AMP','FWDCIRC:AMP','REVCIRC:AMP','SL:REF:AMP','mV:AL:REF','SL:INP:AMP','mV:AMPREF:MIN']
+	PV_header='BR-RF-DLLRF-01:'
+	pv_names=[PV_header]*len(BO_LLRF_label)
+	for i in range(len(BO_LLRF_label)):
+		pv_names[i]=pv_names[i]+BO_LLRF_label[i]
+	pv_set=[ep.PV(name) for name in pv_names]
+	return pv_set
+
+def GEN_create_CalSys_PVset():
+	PV_header='RA-RaBO01:RF-LLRFCalSys:PwrdBm'
+
+	pv_names=[PV_header]*15
+	for i in range(15):
+		pv_names[i]=pv_names[i]+str(i+1)+'_CALC'
+	pv_set=[ep.PV(name) for name in pv_names]
+	return pv_set
 
 '''Tunning functions'''
 
@@ -140,7 +164,12 @@ def TUN_find_offset(ref_threshold=27):
 
 '''Power functions'''
 
-def PWR_read_CalSys(var,inf_flag='inf',ofs_flag='noofs',avg='noavg'):
+def clean_val():
+	global val
+	with g_lock:
+		val=[]
+
+def PWR_read_CalSys(pv_set,var,inf_flag='inf',ofs_flag='noofs',avg='noavg'):
 	if(var.startswith('RFIn')):
 		RFIn=int(var[4:])
 		if(RFIn<1 or RFIn>15):
@@ -148,8 +177,9 @@ def PWR_read_CalSys(var,inf_flag='inf',ofs_flag='noofs',avg='noavg'):
 	else:
 		raise ValueError('Channel '+var+' does not exist')
 
-	PV_header='RA-RaBO01:RF-LLRFCalSys:PwrdBm'
-	pwr_pv=ep.PV(PV_header+str(RFIn)+'_CALC')
+
+	pwr_pv=pv_set[RFIn-1]
+	logging.debug('Reading pv'+str(pwr_pv))
 	if(avg=='noavg'):
 		pwr=pwr_pv.get()
 		if (pwr<-42 and inf_flag!='noinf'):
@@ -165,7 +195,7 @@ def PWR_read_CalSys(var,inf_flag='inf',ofs_flag='noofs',avg='noavg'):
 			raise ValueError('Avg parameter is not an integer')
 		global val
 		global measurements
-		val=[]
+		clean_val()
 		val.append(pwr_pv.get())
 		measurements=1
 		timeout=1.5*avg_size
@@ -184,7 +214,7 @@ def PWR_read_CalSys(var,inf_flag='inf',ofs_flag='noofs',avg='noavg'):
 			return avg+ofs
 		return avg
 
-def PWR_read_LLRF(var,avg='noavg'):
+def PWR_read_LLRF(pv_set,var,avg='noavg'):
 
 	if(var.startswith('RFIn')):
 		RFIn=int(var[4:])
@@ -199,10 +229,8 @@ def PWR_read_LLRF(var,avg='noavg'):
 	else:
 		raise ValueError('Channel '+var+' does not exist')
 
-	BO_LLRF_label=['CAV:AMP','FWDCAV:AMP','REVCAV:AMP','MO:AMP','FWDSSA1:AMP','REVSSA1:AMP','CELL2:AMP','CELL4:AMP','CELL1:AMP','CELL5:AMP','INPRE:AMP','FWDPRE:AMP','REVPRE:AMP','FWDCIRC:AMP','REVCIRC:AMP','SL:REF:AMP','mV:AL:REF','SL:INP:AMP','mV:AMPREF:MIN']
-	PV_header='BR-RF-DLLRF-01:'
-
-	pwr_pv=ep.PV(PV_header+BO_LLRF_label[RFIn-1])
+	pwr_pv=pv_set[RFIn-1]
+	logging.debug('Reading pv'+str(pwr_pv))
 	if(avg=='noavg'):
 		pwr=pwr_pv.get()
 		return pwr
@@ -213,7 +241,7 @@ def PWR_read_LLRF(var,avg='noavg'):
 			raise ValueError('Avg parameter is not an integer')
 		global val
 		global measurements
-		val=[]
+		clean_val()
 		val.append(pwr_pv.get())
 		measurements=1
 		timeout=1.5*avg_size

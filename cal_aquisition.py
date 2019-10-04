@@ -45,7 +45,8 @@ PV_header='BR-RF-DLLRF-01:'
 of=cal.TUN_find_offset(27)
 ep.caput(PV_header+'DTune-SP',float(of))
 ep.caput(PV_header+'TUNE:S',1)
-
+calsys_pv_set=create_CalSys_PVset()
+llrf_pv_set=create_LLRF_PVset()
 
 try:
 	for pwr_lvl in pwr_vec:
@@ -79,10 +80,10 @@ try:
 		for i in range(1,16):
 			print('Aquiring LLRF channel RFIn'+str(i))
 			logging.info('Aquiring LLRF channel RFIn'+str(i))
-			results[j,2*(i-1)+1]=cal.PWR_read_LLRF('RFIn'+str(i),avg=meas_avg)
+			results[j,2*(i-1)+1]=cal.PWR_read_LLRF(llrf_pv_set,'RFIn'+str(i),avg=meas_avg)
 			print('Aquiring CalSys channel RFIn'+str(i))
 			logging.info('Aquiring CalSys channel RFIn'+str(i))
-			results[j,2*(i)]=cal.PWR_read_CalSys('RFIn'+str(i),avg=meas_avg)
+			results[j,2*(i)]=cal.PWR_read_CalSys(calsys_pv_set,'RFIn'+str(i),avg=meas_avg)
 
 		j=j+1
 except:

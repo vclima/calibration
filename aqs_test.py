@@ -3,12 +3,19 @@ import time
 import epics as ep
 from datetime import datetime
 import logging
+import numpy as np
+import threading
+
+g_lock = threading.RLock()
+measurements = 0
+val = 0
 
 def GEN_PV_average(pvname=None,value=None,**kws):
-	global val
-	global measurements
-	val.append(value)
-	measurements+=1
+	with g_lock:
+		global val
+		global measurements
+		val.append(value)
+		measurements += 1
 
 def create_LLRF_PVset():
 	BO_LLRF_label=['CAV:AMP','FWDCAV:AMP','REVCAV:AMP','MO:AMP','FWDSSA1:AMP','REVSSA1:AMP','CELL2:AMP','CELL4:AMP','CELL1:AMP','CELL5:AMP','INPRE:AMP','FWDPRE:AMP','REVPRE:AMP','FWDCIRC:AMP','REVCIRC:AMP','SL:REF:AMP','mV:AL:REF','SL:INP:AMP','mV:AMPREF:MIN']
@@ -21,7 +28,7 @@ def create_LLRF_PVset():
 
 def create_CalSys_PVset():
 	PV_header='RA-RaBO01:RF-LLRFCalSys:PwrdBm'
-	
+
 	pv_names=[PV_header]*15
 	for i in range(15):
 		pv_names[i]=pv_names[i]+str(i+1)+'_CALC'
@@ -57,7 +64,7 @@ def alt_read_LLRF(pv_set,var,avg='noavg'):
 			raise ValueError('Avg parameter is not an integer')
 		global val
 		global measurements
-		val=[]
+		clean_val()
 		val.append(pwr_pv.get())
 		measurements=1
 		timeout=1.5*avg_size
@@ -71,6 +78,11 @@ def alt_read_LLRF(pv_set,var,avg='noavg'):
 		avg=sum(val)/len(val)
 		return avg
 
+def clean_val():
+	global val
+	with g_lock:
+		val=[]
+
 def alt_read_CalSys(pv_set,var,inf_flag='inf',ofs_flag='noofs',avg='noavg'):
 	if(var.startswith('RFIn')):
 		RFIn=int(var[4:])
@@ -79,7 +91,7 @@ def alt_read_CalSys(pv_set,var,inf_flag='inf',ofs_flag='noofs',avg='noavg'):
 	else:
 		raise ValueError('Channel '+var+' does not exist')
 
-	
+
 	pwr_pv=pv_set[RFIn-1]
 	logging.debug('Reading pv'+str(pwr_pv))
 	if(avg=='noavg'):
@@ -97,7 +109,7 @@ def alt_read_CalSys(pv_set,var,inf_flag='inf',ofs_flag='noofs',avg='noavg'):
 			raise ValueError('Avg parameter is not an integer')
 		global val
 		global measurements
-		val=[]
+		clean_val()
 		val.append(pwr_pv.get())
 		measurements=1
 		timeout=1.5*avg_size
@@ -116,34 +128,34 @@ def alt_read_CalSys(pv_set,var,inf_flag='inf',ofs_flag='noofs',avg='noavg'):
 			return avg+ofs
 		return avg
 
+if __name__ == '__main__':
 
-meas_avg=10
+	meas_avg=10
 
-now=datetime.now()
-date=now.strftime("%H%M_%d%m%y")
-logging.basicConfig(level=logging.DEBUG,filename=date+'_test.log', filemode='w', format='%(asctime)s - %(levelname)s - %(message)s')
+	now=datetime.now()
+	date=now.strftime("%H%M_%d%m%y")
+	logging.basicConfig(level=logging.DEBUG,filename=date+'_test.log', filemode='w', format='%(asctime)s - %(levelname)s - %(message)s')
 
-while(1):
-	test_type=input('Test type:')
 	while(1):
-		if(test_type==1):
-			for i in range(1,16):
-				print('Aquiring LLRF channel RFIn'+str(i))
-				logging.info('Aquiring LLRF channel RFIn'+str(i))
-				cal.PWR_read_LLRF('RFIn'+str(i),avg=meas_avg)
-				print('Aquiring CalSys channel RFIn'+str(i))
-				logging.info('Aquiring CalSys channel RFIn'+str(i))
-				cal.PWR_read_CalSys('RFIn'+str(i),avg=meas_avg)
-		else:
+		test_type=input('Test type:')
+		while(1):
+			# if(test_type=='1'):
+			# 	logging.info('Test type 1')
+			# 	for i in range(1,16):
+			# 		print('Aquiring LLRF channel RFIn'+str(i))
+			# 		logging.info('Aquiring LLRF channel RFIn'+str(i))
+			# 		cal.PWR_read_LLRF('RFIn'+str(i),avg=meas_avg)
+			# 		print('Aquiring CalSys channel RFIn'+str(i))
+			# 		logging.info('Aquiring CalSys channel RFIn'+str(i))
+			# 		cal.PWR_read_CalSys('RFIn'+str(i),avg=meas_avg)
+			# else:
+			logging.info('Test type 2')
 			calsys_pv_set=create_CalSys_PVset()
 			llrf_pv_set=create_LLRF_PVset()
 			for i in range(1,16):
 				print('Aquiring LLRF channel RFIn'+str(i))
 				logging.info('Aquiring LLRF channel RFIn'+str(i))
 				alt_read_LLRF(llrf_pv_set,'RFIn'+str(i),avg=meas_avg)
-				print('Aquiring CalSys channel RFIn'+str(i))
-				logging.info('Aquiring CalSys channel RFIn'+str(i))
-				alt_read_CalSys(calsys_pv_set,'RFIn'+str(i),avg=meas_avg)
-
-
-
+				# print('Aquiring CalSys channel RFIn'+str(i))
+				# logging.info('Aquiring CalSys channel RFIn'+str(i))
+				# alt_read_CalSys(calsys_pv_set,'RFIn'+str(i),avg=meas_avg)
