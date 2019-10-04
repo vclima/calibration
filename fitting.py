@@ -3,7 +3,7 @@ import numpy as np
 import calibration_lib as cal
 import matplotlib.pyplot as plt
 
-csv_name='1547_250919_AQS.csv'
+csv_name=input('File name: ')
 
 header_template=header=['AmpRef_LLRF','INRF1_LLRF','INRF1_CalSys','INRF2_LLRF','INRF2_CalSys','INRF3_LLRF','INRF3_CalSys','INRF4_LLRF','INRF4_CalSys','INRF5_LLRF',
 'INRF5_CalSys','INRF6_LLRF','INRF6_CalSys','INRF7_LLRF','INRF7_CalSys','INRF8_LLRF','INRF8_CalSys','INRF9_LLRF','INRF9_CalSys','INRF10_LLRF',
@@ -43,13 +43,13 @@ if (LS==1):
 		olg_coeff[:,j]=olg_old
 		j=j+1
 else:
-	d1=data[:,0]
+	d2=data[:,0]
 	j=0
 	for k in olg_cols:
 		found=0
 		for i in range(1,range_length):
 			if(header[2*(i-1)+1]==header_template[2*k+1]):
-				d2=data[:,2*(i-1)+1]
+				d1=data[:,2*(i-1)+1]
 				olg_new,r,_,_,_=np.polyfit(d1,d2,4,full=True)
 				olg_old=cal.PWR_read_LLRF_coeff('RFIn'+str(k+1),'OLG')
 				d2_fit=np.polyval(olg_new,d1)
@@ -84,7 +84,12 @@ for k in range(1,16):
 		if(header[2*(i-1)+1]==header_template[2*(k-1)+1]):
 			d1=data[:,2*(i-1)+1]
 			d2=cal.GEN_dBmtoVrms(data[:,2*i])
-			c_new,r,_,_,_=np.polyfit(d1,d2,4,full=True)
+			if(k==4):
+				avg=d2.mean()/d1.mean()
+				c_new=[0,0,0,avg,0]
+				r=0
+			else:
+				c_new,r,_,_,_=np.polyfit(d1,d2,4,full=True)
 			c_old=cal.PWR_read_LLRF_coeff('RFIn'+str(k),'Raw-U')
 			d2_fit=np.polyval(c_new,d1)
 			d2_old_fit=np.polyval(c_old,d1)
@@ -94,7 +99,7 @@ for k in range(1,16):
 			plt.title(BO_LLRF_label[k-1]+' Raw-U R='+str(r))
 			plt.legend(loc='best')
 			plt.show(block=False)
-			ans=input('Do you wish to replace the '+BO_LLRF_label[k-1]+' RAW-U old coefficients? [Y/n]?')
+			ans=input('Do you wish to replace the '+BO_LLRF_label[k-1]+' Raw-U old coefficients? [Y/n]?')
 			if(ans=='Y' or ans=='y'):
 				coeff_Raw_U[:,k-1]=c_new
 				print('Coefficients replaced')
@@ -106,6 +111,7 @@ for k in range(1,16):
 			found=1
 			break
 	if(not found):
+		print(BO_LLRF_label[k]+' Raw-U not found, keeping old coefficients')
 		c_old=cal.PWR_read_LLRF_coeff('RFIn'+str(k),'Raw-U')
 		coeff_Raw_U[:,k-1]=c_old
 
@@ -140,6 +146,7 @@ for k in u_raw_inputs:
 			found=1
 			break
 	if(not found):
+		print(BO_LLRF_label[k]+' U-Raw not found, keeping old coefficients')
 		c_old=cal.PWR_read_LLRF_coeff('RFIn'+str(k),'U-Raw')
 		coeff_U_Raw[:,j]=c_old
 		j=j+1

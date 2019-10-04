@@ -21,6 +21,10 @@ logging.basicConfig(level=logging.DEBUG,filename=date+'.log', filemode='w', form
 meas_avg=10
 stab_time=20
 
+stop_power=int(input('Set stop power:'))
+step_size=int(input('Set step size:'))
+sint_flag=input('Enable auto-tunning during script?[Y/n]')
+
 aqs_channels=list(range(1,16))
 
 while (True):
@@ -64,18 +68,19 @@ if(not(cal.GEN_check_RF())):
 	logging.error('No RF Power')
 	raise Exception ('Check RF Power and Loop')
 
+calsys_pv_set=cal.GEN_create_CalSys_PVset()
+llrf_pv_set=cal.GEN_create_LLRF_PVset()
 
-starting_power=int(round(cal.PWR_read_LLRF('AmpSP')))
-stop_power=int(input('Set stop power:'))
-step_size=nt(input('Set step size:'))
+starting_power=int(round(cal.PWR_read_LLRF(llrf_pv_set,'AmpSP')))
+
 error=0
 line_index=0
 pwr_vec=np.arange(starting_power,stop_power-step_size,-step_size)
 logging.debug('PWR levels: '+str(pwr_vec))
-logging.debug('Channels: '+aqs_channels)
+logging.debug('Channels: '+str(aqs_channels))
 
-while(abs(cal.PWR_read_LLRF('AmpSP')-cal.PWR_read_LLRF('AmpRef'))>0.1):
-	print(abs(cal.PWR_read_LLRF('AmpSP')-cal.PWR_read_LLRF('AmpRef')))
+while(abs(cal.PWR_read_LLRF(llrf_pv_set,'AmpSP')-cal.PWR_read_LLRF(llrf_pv_set,'AmpRef'))>0.1):
+	print(abs(cal.PWR_read_LLRF(llrf_pv_set,'AmpSP')-cal.PWR_read_LLRF(llrf_pv_set,'AmpRef')))
 	time.sleep(3)
 
 results=np.zeros((len(pwr_vec),2*len(aqs_channels)+1))
@@ -83,12 +88,12 @@ results=np.zeros((len(pwr_vec),2*len(aqs_channels)+1))
 j=0
 PV_header='BR-RF-DLLRF-01:'
 
-of=cal.TUN_find_offset(27)
-ep.caput(PV_header+'DTune-SP',float(of))
-ep.caput(PV_header+'TUNE:S',1)
+if(sint_flag=='Y'):
+	of=cal.TUN_find_offset(27)
+	ep.caput(PV_header+'DTune-SP',float(of))
+	ep.caput(PV_header+'TUNE:S',1)
 
-calsys_pv_set=create_CalSys_PVset()
-llrf_pv_set=create_LLRF_PVset()
+
 
 try:
 	for pwr_lvl in pwr_vec:
@@ -99,34 +104,36 @@ try:
 		print('Setting power to '+str(pwr_lvl)+' mV')
 		logging.info('Setting power to '+str(pwr_lvl)+' mV')
 		time.sleep(1)
-		while(abs(cal.PWR_read_LLRF('AmpSP')-cal.PWR_read_LLRF('AmpRef'))>0.1):
-			logging.debug('PWR diff: '+str(abs(cal.PWR_read_LLRF('AmpSP')-cal.PWR_read_LLRF('AmpRef'))))
+		while(abs(cal.PWR_read_LLRF(llrf_pv_set,'AmpSP')-cal.PWR_read_LLRF(llrf_pv_set,'AmpRef'))>0.1):
+			logging.debug('PWR diff: '+str(abs(cal.PWR_read_LLRF(llrf_pv_set,'AmpSP')-cal.PWR_read_LLRF(llrf_pv_set,'AmpRef'))))
 			time.sleep(1)
 
 		logging.debug('Reached power level')
 		print('Waiting stabilization')
 		time.sleep(stab_time)
-		if(pwr_lvl>35):
-			try:
-				of=cal.TUN_find_offset(20)
-				ep.caput(PV_header+'DTune-SP',float(of))
-				ep.caput(PV_header+'TUNE:S',1)
-			except :
-				logging.exception('Tunning exception')
-				if(not(cal.GEN_check_RF())):
-					error=1
-					break
-				print('Unable to tune, power too low')
-				logging.warning('Unable to tune, power too low')
-		results[j,0]=cal.PWR_read_LLRF('AmpRef')
+		if(sint_flag=='Y'):
+			if(pwr_lvl>35):
+				try:
+					of=cal.TUN_find_offset(27)
+					ep.caput(PV_header+'DTune-SP',float(of))
+					ep.caput(PV_header+'TUNE:S',1)
+				except :
+					logging.exception('Tunning exception')
+					if(not(cal.GEN_check_RF())):
+						error=1
+						break
+					print('Unable to tune, power too low')
+					logging.warning('Unable to tune, power too low')
+		results[j,0]=cal.PWR_read_LLRF(llrf_pv_set,'AmpRef')
+		k=1
 		for i in aqs_channels:
 			print('Aquiring LLRF channel RFIn'+str(i))
 			logging.info('Aquiring LLRF channel RFIn'+str(i))
-			results[j,2*(i-1)+1]=cal.PWR_read_LLRF(llrf_pv_set,'RFIn'+str(i),avg=meas_avg)
+			results[j,2*(k-1)+1]=cal.PWR_read_LLRF(llrf_pv_set,'RFIn'+str(i),avg=meas_avg)
 			print('Aquiring CalSys channel RFIn'+str(i))
 			logging.info('Aquiring CalSys channel RFIn'+str(i))
-			results[j,2*(i)]=cal.PWR_read_CalSys(calsys_pv_set,'RFIn'+str(i),avg=meas_avg)
-
+			results[j,2*(k)]=cal.PWR_read_CalSys(calsys_pv_set,'RFIn'+str(i),avg=meas_avg)
+			k=k+1
 		j=j+1
 except:
 	logging.exception('Unknown exception')

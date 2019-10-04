@@ -126,9 +126,9 @@ def TUN_find_offset(ref_threshold=27):
 	PV_header='BR-RF-DLLRF-01:'
 	global direction_sel
 	it_limit=11
-
-	fwd_power=PWR_read_CalSys('RFIn14',ofs_flag='ofs')
-	rev_power=PWR_read_CalSys('RFIn15',ofs_flag='ofs')
+	calsys_pv_set=GEN_create_CalSys_PVset()
+	fwd_power=ep.caget('RA-RaBO01:RF-LLRFCalSys:PwrdBm14-Mon')
+	rev_power=ep.caget('RA-RaBO01:RF-LLRFCalSys:PwrdBm15-Mon')
 	diff=fwd_power-rev_power
 	print('Ref ratio '+str(diff))
 	if(isnan(diff)):
@@ -144,8 +144,8 @@ def TUN_find_offset(ref_threshold=27):
 	while(diff<ref_threshold and iterations<=it_limit):
 		TUN_move_plunger(direction_sel,pulses)
 		diff_old=diff
-		fwd_power=PWR_read_CalSys('RFIn14',ofs_flag='ofs')
-		rev_power=PWR_read_CalSys('RFIn15',ofs_flag='ofs')
+		fwd_power=ep.caget('RA-RaBO01:RF-LLRFCalSys:PwrdBm14-Mon')
+		rev_power=ep.caget('RA-RaBO01:RF-LLRFCalSys:PwrdBm15-Mon')	
 		diff=fwd_power-rev_power
 		print('Ref ratio '+str(diff))
 		if(isnan(diff)):
@@ -179,7 +179,6 @@ def PWR_read_CalSys(pv_set,var,inf_flag='inf',ofs_flag='noofs',avg='noavg'):
 
 
 	pwr_pv=pv_set[RFIn-1]
-	logging.debug('Reading pv'+str(pwr_pv))
 	if(avg=='noavg'):
 		pwr=pwr_pv.get()
 		if (pwr<-42 and inf_flag!='noinf'):
@@ -230,7 +229,6 @@ def PWR_read_LLRF(pv_set,var,avg='noavg'):
 		raise ValueError('Channel '+var+' does not exist')
 
 	pwr_pv=pv_set[RFIn-1]
-	logging.debug('Reading pv'+str(pwr_pv))
 	if(avg=='noavg'):
 		pwr=pwr_pv.get()
 		return pwr

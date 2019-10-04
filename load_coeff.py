@@ -2,7 +2,7 @@ import csv
 import numpy as np
 import calibration_lib as cal
 
-csv_name='1547_250919_fit.csv'
+csv_name=input('File name: ')
 
 with open(csv_name) as csvfile:
 	csvfile = csv.reader(csvfile, delimiter=',', quotechar='"')
