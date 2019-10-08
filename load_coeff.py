@@ -11,7 +11,7 @@ with open(csv_name) as csvfile:
 		if line_count==0:
 			header=row
 			ColsSize=len(header)
-			data=np.zeros((5,ColsSize))
+			data=np.zeros((6,ColsSize))
 			line_count+=1
 		else:
 			data[line_count-1,:]=row

@@ -126,7 +126,6 @@ def TUN_find_offset(ref_threshold=27):
 	PV_header='BR-RF-DLLRF-01:'
 	global direction_sel
 	it_limit=11
-	calsys_pv_set=GEN_create_CalSys_PVset()
 	fwd_power=ep.caget('RA-RaBO01:RF-LLRFCalSys:PwrdBm14-Mon')
 	rev_power=ep.caget('RA-RaBO01:RF-LLRFCalSys:PwrdBm15-Mon')
 	diff=fwd_power-rev_power
@@ -279,10 +278,13 @@ def PWR_read_LLRF_coeff(var,type):
 	return coeff
 
 def PWR_set_LLRF_coeff(coef):
-	if(not coef.shape==(5,21)):
+	if(not coef.shape==(6,21)):
 		raise ValueError ('Wrong coefficient array size')
 	PV_header='BR-RF-DLLRF-01:'
 	BO_LLRF_label=['CAV','FWDCAV','FWDSSA1','CAV','FWDCAV','REVCAV','MO','FWDSSA1','REVSSA1','CELL2','CELL4','CELL1','CELL5','INPRE','FWDPRE','REVPRE','FWDCIRC','REVCIRC','CAV','FWDCAV','FWDSSA1']
+	LLRF_Ramp_label=['CELL3','CELL2','CELL4','FWDCAV','FWDSSA1','REVSSA1','REVCAV']
+	ramp_index=[3,9,10,4,7,8,5]
+	j=0
 	for i in range(0,21):
 		if i<3:
 			logging.info('Setting '+BO_LLRF_label[i]+' OLG Coefficients')
@@ -302,6 +304,72 @@ def PWR_set_LLRF_coeff(coef):
 			ep.caput(PV_name+'C2:S',coef[2,i])
 			ep.caput(PV_name+'C1:S',coef[3,i])
 			ep.caput(PV_name+'C0:S',coef[4,i])
+			ep.caput(PV_header+BO_LLRF_label[i]+':Const:OFS:S',coef[5,i])
+			if(i in ramp_index):
+				if(i==3):
+					logging.info('Setting '+BO_LLRF_label[i]+' RAW-U TOP Coefficients')
+					print('Setting '+BO_LLRF_label[i]+' RAW-U TOP Coefficients')
+					PV_name=PV_header+'TOP:CELL3:Const:Raw-U:'
+					ep.caput(PV_name+'C4:S',coef[0,i])
+					ep.caput(PV_name+'C3:S',coef[1,i])
+					ep.caput(PV_name+'C2:S',coef[2,i])
+					ep.caput(PV_name+'C1:S',coef[3,i])
+					ep.caput(PV_name+'C0:S',coef[4,i])
+					ep.caput(PV_header+'TOP:CELL3:Const:OFS:S',coef[5,i])
+
+
+					logging.info('Setting '+BO_LLRF_label[i]+' RAW-U BOT Coefficients')
+					print('Setting '+BO_LLRF_label[i]+' RAW-U BOT Coefficients')
+					PV_name=PV_header+'BOT:CELL3:Const:Raw-U:'
+					ep.caput(PV_name+'C4:S',coef[0,i])
+					ep.caput(PV_name+'C3:S',coef[1,i])
+					ep.caput(PV_name+'C2:S',coef[2,i])
+					ep.caput(PV_name+'C1:S',coef[3,i])
+					ep.caput(PV_name+'C0:S',coef[4,i])
+					ep.caput(PV_header+'BOT:CELL3:Const:OFS:S',coef[5,i])
+
+					logging.info('Setting REF RAW-U TOP Coefficients')
+					print('Setting REF RAW-U TOP Coefficients')
+					PV_name=PV_header+'TOP:REF:Const:Raw-U:'
+					ep.caput(PV_name+'C4:S',coef[0,i])
+					ep.caput(PV_name+'C3:S',coef[1,i])
+					ep.caput(PV_name+'C2:S',coef[2,i])
+					ep.caput(PV_name+'C1:S',coef[3,i])
+					ep.caput(PV_name+'C0:S',coef[4,i])
+					ep.caput(PV_header+'TOP:REF:Const:OFS:S',coef[5,i])
+
+					logging.info('Setting REF RAW-U BOT Coefficients')
+					print('Setting REF RAW-U BOT Coefficients')
+					PV_name=PV_header+'BOT:REF:Const:Raw-U:'
+					ep.caput(PV_name+'C4:S',coef[0,i])
+					ep.caput(PV_name+'C3:S',coef[1,i])
+					ep.caput(PV_name+'C2:S',coef[2,i])
+					ep.caput(PV_name+'C1:S',coef[3,i])
+					ep.caput(PV_name+'C0:S',coef[4,i])
+					ep.caput(PV_header+'BOT:REF:Const:OFS:S',coef[5,i])
+
+				else:
+					logging.info('Setting '+BO_LLRF_label[i]+' RAW-U TOP Coefficients')
+					print('Setting '+BO_LLRF_label[i]+' RAW-U TOP Coefficients')
+					PV_name=PV_header+'TOP:'+BO_LLRF_label[i]+':Const:Raw-U:'
+					ep.caput(PV_name+'C4:S',coef[0,i])
+					ep.caput(PV_name+'C3:S',coef[1,i])
+					ep.caput(PV_name+'C2:S',coef[2,i])
+					ep.caput(PV_name+'C1:S',coef[3,i])
+					ep.caput(PV_name+'C0:S',coef[4,i])
+					ep.caput(PV_header+'TOP:'+BO_LLRF_label[i]+':Const:OFS:S',coef[5,i])
+
+
+					logging.info('Setting '+BO_LLRF_label[i]+' RAW-U BOT Coefficients')
+					print('Setting '+BO_LLRF_label[i]+' RAW-U BOT Coefficients')
+					PV_name=PV_header+'BOT:'+BO_LLRF_label[i]+':Const:Raw-U:'
+					ep.caput(PV_name+'C4:S',coef[0,i])
+					ep.caput(PV_name+'C3:S',coef[1,i])
+					ep.caput(PV_name+'C2:S',coef[2,i])
+					ep.caput(PV_name+'C1:S',coef[3,i])
+					ep.caput(PV_name+'C0:S',coef[4,i])
+					ep.caput(PV_header+'BOT:'+BO_LLRF_label[i]+':Const:OFS:S',coef[5,i])
+
 		else:
 			logging.info('Setting '+BO_LLRF_label[i]+' U-RAW Coefficients')
 			print('Setting '+BO_LLRF_label[i]+' U-RAW Coefficients')
