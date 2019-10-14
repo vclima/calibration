@@ -327,7 +327,7 @@ def PWR_set_LLRF_coeff(coef):
 					ep.caput(PV_name+'C1:S',coef[3,i])
 					ep.caput(PV_name+'C0:S',coef[4,i])
 					ep.caput(PV_header+'BOT:CELL3:Const:OFS:S',coef[5,i])
-
+					'''
 					logging.info('Setting REF RAW-U TOP Coefficients')
 					print('Setting REF RAW-U TOP Coefficients')
 					PV_name=PV_header+'TOP:REF:Const:Raw-U:'
@@ -347,6 +347,7 @@ def PWR_set_LLRF_coeff(coef):
 					ep.caput(PV_name+'C1:S',coef[3,i])
 					ep.caput(PV_name+'C0:S',coef[4,i])
 					ep.caput(PV_header+'BOT:REF:Const:OFS:S',coef[5,i])
+					'''
 
 				else:
 					logging.info('Setting '+BO_LLRF_label[i]+' RAW-U TOP Coefficients')
