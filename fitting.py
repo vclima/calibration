@@ -83,7 +83,7 @@ for k in range(1,16):
 	for i in range(1,range_length):
 		if(header[2*(i-1)+1]==header_template[2*(k-1)+1]):
 			d1=data[:,2*(i-1)+1]
-			d2=cal.GEN_dBmtoVrms(data[:,2*i])
+			d2=cal.GEN_dBmtomVp(data[:,2*i])
 			if(k==4):
 				avg=d2.mean()/d1.mean()
 				ofs=cal.PWR_read_LLRF_ofs('RFIn4')
@@ -125,7 +125,7 @@ for k in u_raw_inputs:
 	for i in range(1,range_length):
 		if(header[2*(i-1)+1]==header_template[2*(k-1)+1]):
 			d2=data[:,2*(i-1)+1]
-			d1=cal.GEN_dBmtoVrms(data[:,2*i])
+			d1=cal.GEN_dBmtomVp(data[:,2*i])
 			c_new,r,_,_,_=np.polyfit(d1,d2,4,full=True)
 			c_old=cal.PWR_read_LLRF_coeff('RFIn'+str(k),'U-Raw')
 			d2_fit=np.polyval(c_new,d1)

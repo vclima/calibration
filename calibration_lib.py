@@ -49,7 +49,7 @@ def GEN_PV_average(pvname=None,value=None,**kws):
 		print(pvname, value, measurements)
 		measurements += 1
 
-def GEN_dBmtoVrms(dbm_value):
+def GEN_dBmtomVp(dbm_value):
 	V_value=np.sqrt(10**(dbm_value/10)*0.1)*1000
 	return V_value
 
