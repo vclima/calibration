@@ -50,7 +50,7 @@ def GEN_PV_average(pvname=None,value=None,**kws):
 		measurements += 1
 
 def GEN_dBmtoVrms(dbm_value):
-	V_value=np.sqrt(10**(dbm_value/10)*0.05)
+	V_value=np.sqrt(10**(dbm_value/10)*0.1)*1000
 	return V_value
 
 def GEN_create_LLRF_PVset():
