@@ -33,11 +33,11 @@ while (True):
 	if (selection=='A'):
 		selection=input('Press A to add all channels or type channel #:')
 		if (selection=='A'):
-			aqs_channels=list(range(1,16))
+			aqs_channels=list(range(1,17))
 		else:
 			try:
 				selection=int(selection)
-				if (selection<=15 and selection>0):
+				if (selection<=16 and selection>0):
 					if(not (selection in aqs_channels)):
 						aqs_channels.append(selection)
 						aqs_channels.sort()
@@ -53,7 +53,7 @@ while (True):
 		else:
 			try:
 				selection=int(selection)
-				if (selection<=15 and selection>0):
+				if (selection<=16 and selection>0):
 					if(selection in aqs_channels):
 						aqs_channels.append(selection)
 						aqs_channels.sort()
@@ -86,10 +86,10 @@ while(abs(cal.PWR_read_LLRF(llrf_pv_set,'AmpSP')-cal.PWR_read_LLRF(llrf_pv_set,'
 results=np.zeros((len(pwr_vec),2*len(aqs_channels)+1))
 
 j=0
-PV_header='BR-RF-DLLRF-01:'
+PV_header='SR-RF-DLLRF-01:'
 
 if(sint_flag=='Y'):
-	of=cal.TUN_find_offset(27)
+	of=cal.TUN_find_offset(13)
 	ep.caput(PV_header+'DTune-SP',float(of))
 	ep.caput(PV_header+'TUNE:S',1)
 
@@ -145,7 +145,7 @@ setup=['LoopStatus='+str(cal.GEN_check_loop()),'StepSize='+str(step_size),'Start
 
 header_template=['AmpRef_LLRF','INRF1_LLRF','INRF1_CalSys','INRF2_LLRF','INRF2_CalSys','INRF3_LLRF','INRF3_CalSys','INRF4_LLRF','INRF4_CalSys','INRF5_LLRF',
 'INRF5_CalSys','INRF6_LLRF','INRF6_CalSys','INRF7_LLRF','INRF7_CalSys','INRF8_LLRF','INRF8_CalSys','INRF9_LLRF','INRF9_CalSys','INRF10_LLRF',
-'INRF10_CalSys','INRF11_LLRF','INRF11_CalSys','INRF12_LLRF','INRF12_CalSys','INRF13_LLRF','INRF13_CalSys','INRF14_LLRF','INRF14_CalSys','INRF15_LLRF','INRF15_CalSys']
+'INRF10_CalSys','INRF11_LLRF','INRF11_CalSys','INRF12_LLRF','INRF12_CalSys','INRF13_LLRF','INRF13_CalSys','INRF14_LLRF','INRF14_CalSys','INRF15_LLRF','INRF15_CalSys','INRF16_LLRF','INRF16_CalSys']
 
 header=[]
 header.append(header_template[0])
